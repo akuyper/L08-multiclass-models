@@ -1,0 +1,224 @@
+---
+title: "L08 Multiclass Models"
+subtitle: "Data Science 2 with R (STAT 301-2)"
+author: "YOUR NAME"
+date: today
+
+format:
+  html:
+    toc: true
+    toc-depth: 4
+    embed-resources: true
+    code-fold: show
+    link-external-newwindow: true
+    
+execute:
+  warning: false
+  
+from: markdown+emoji
+reference-location: margin
+citation-location: margin 
+---
+
+::: {.callout-tip icon="false"}
+## Github Repo Link
+
+To link to your github **repo**sitory, appropriately edit the example link below. Meaning replace `https://your-github-repo-url` with your github repo url. Suggest verifying the link works before submitting.
+
+[https://your-github-repo-url](https://your-github-repo-url)
+:::
+
+## Overview
+
+This is an **OPTIONAL** lab. Students are not required to complete it. However, attempting the lab is **strongly** recommended, especially if your final project involves predicting a categorical outcome with multiple levels. This lab provides an example workflow for multiclass problems.
+
+## Exercise
+
+We will be working with the file `pokemon.csv`, found in `/data`. The file is from Kaggle: <https://www.kaggle.com/abcsds/pokemon>.
+
+The [Pokémon](https://www.pokemon.com/us/) franchise encompasses video games, TV shows, movies, books, and a card game. This data set was drawn from the video game series and contains statistics about 721 Pokémon, or "pocket monsters." In Pokémon games, the user plays as a trainer who collects, trades, and battles Pokémon to (a) collect all the Pokémon and (b) become the champion Pokémon trainer.
+
+Each Pokémon has a [primary type](https://bulbapedia.bulbagarden.net/wiki/Type) (some even have secondary types). Based on their type, a Pokémon is strong against some types, and vulnerable to others --- think rock, paper, scissors. A Fire-type Pokémon, for example, is vulnerable to Water-type Pokémon, but strong against Grass-type.
+
+![Vulpix, a Fire-type fox Pokémon from Generation 1.](images/vulpix.png){width="196" #fig-vulpix} 
+
+::: {.callout-note icon="false"}
+## Prediction goal
+Our goal is to predict the **primary type** of a Pokémon based on its generation, legendary status, and six battle statistics.
+:::
+
+### Tasks
+
+#### Task 1
+
+Read in the file and familiarize yourself with the variables using `pokemon_codebook.txt`.
+
+Explore the target variable `type_1` suing the entire dataset. How many classes/levels of the outcome are there? Are there any Pokémon types with very few Pokémon? If so, which ones?
+
+::: {.callout-tip icon="false"}
+## Solution
+
+YOUR SOLUTION HERE --- no code should be seen or accessible.
+
+:::
+
+For this exercise, we'll ignore the rarer classes by filtering them out. Filter the entire data set to contain only Pokémon whose `type_1` is `"Bug"`, `"Fire"`, `"Grass"`, `"Normal"`, `"Water"`, or `"Psychic"`. After filtering, it will be useful to convert `type_1` to a factor.
+
+After inspection of the target variable is complete it is a good idea to check the quality of the data. Do you notice any problems? If so, what?
+
+::: {.callout-tip icon="false"}
+## Solution
+
+YOUR SOLUTION HERE --- no code should be seen or accessible.
+
+:::
+
+A few things that can either be taken care of as we read in the data or could be handled during the featuring engineering/recipe work:
+
+- The variable `legendary` is a logical vector and would be easier to work with as one of our standard types (numeric or factor).
+
+- For our models, we won't be using the variables `number`, `name`, `type_2`, or `total`. You can choose to remove these when writing your recipe or do so now, before the split.
+
+#### Task 2
+
+Perform an initial split of the data. Stratify by the outcome variable. You can choose a proportion to use. 
+
+Next, implement V-fold cross-validation using 3 folds, 4 repeats, and use stratification to form the resamples on `type_1`. Why might this be useful?
+
+::: {.callout-tip icon="false"}
+## Solution
+
+YOUR SOLUTION HERE --- don't need the code, just an answer to the question
+
+:::
+
+#### Task 3
+
+We are going to setup one very simple recipe that can be used by various types of models. We could be much more specific and inventive with the feature engineering, but we will opt for simplicity so we can focus on conducting a multiclass problem from start to finish. 
+
+Set up a recipe to predict `type_1` with `legendary`, `generation`, `sp_atk`, `attack`, `speed`, `defense`, `hp`, and `sp_def`. If needed, dummy and categorical variables. Remove any variables with zero variance. Also center and scale all predictor variables.
+
+::: {.callout-tip icon="false"}
+## Solution
+
+YOUR SOLUTION HERE --- display the recipe code
+
+:::
+
+#### Task 4
+
+We'll be comparing 4 model types as listed below. You'll need to properly define and fit workflows for each.
+
+1.  Elastic net, tuning `penalty` and `mixture` (hint: `multinom_reg` with `glmnet` engine)
+2.  Random forest model, tuning `mtry` and `min_n` (set `trees` to 1,000);
+3.  Boosted tree model, tuning `mtry`, `trees`, and `learn_rate`; &
+4.  KNN model, tuning `neighbors`.
+
+Use a regular grid to tune the hyperparameters. Explore `mtry` from 1 to 5, `neighbors` from 1 to 30, `learn_rate` from 0.3 to 0.8 (need to use `trans = scales::identity_trans()`), and penalty from 0 to 1. Use defaults for all others. Choose the value of the `levels` argument for these hyperparameters. We recommend adjusting based on your computing power, as increasing the number of levels can increase the number of models.
+
+When specifying the random forest model, include `importance = "impurity"` as an argument to the `set_engine()` function. This will allow you to create a variable importance plot (VIP) later.
+
+When fitting on the resamples, (1) use parallel processing and (2) should save the workflows. 
+
+
+::: {.callout-warning}
+This fitting to resamples could take a while, plan accordingly.
+:::
+
+::: {.callout-tip icon="false"}
+## Solution
+
+YOUR SOLUTION HERE --- Simple confirmation that this task has been completed. Nothing else is needed, output for later tasks will confirm this was done correctly.
+
+:::
+
+#### Task 5
+
+We'll be using the area under the curve as our comparison metric, or `roc_auc`. Run `autoplot()` and `show_best()` on each of your tuned models from Task 8. Remember to set the `metric` argument to `"roc_auc"` for these. 
+
+How is this metric used to compare models? What was the best performing model for each of the model classes? Which is the best overall?
+
+::: {.callout-tip icon="false"}
+## Solution
+
+YOUR SOLUTION HERE --- no code should be seen or accessible.
+
+:::
+
+#### Task 6
+
+After identifying the best model, use `finalize_workflow()` to your finalize the appropriate workflow with the best performing parameter values.
+
+Train the winning model using the entire training set.
+
+::: {.callout-tip icon="false"}
+## Solution
+
+YOUR SOLUTION HERE --- Simple confirmation that this task has been completed. Nothing else is needed, output for later tasks will confirm this was done correctly.
+
+:::
+
+#### Task 7
+
+Use `predict()` with `type = "prob"` to generate class probabilities from the winning model for the test set. Pipe this into `roc_auc()`. Note that you need to specify the column names for the class probabilities as arguments to `roc_auc()` and, later, `roc_curve()`.
+
+What is the overall AUC value for your model when used on the test data?
+
+::: {.callout-tip icon="false"}
+## Solution
+
+YOUR SOLUTION HERE --- no code should be seen or accessible.
+
+:::
+
+Using a similar process, create ROC curves using `roc_curve()` and `autoplot()`. Also, create a confusion matrix for your model (see `conf_mat()`). These will help us answer the following questions:
+
+::: {.callout-tip icon="false"}
+## Solution
+
+YOUR SOLUTION HERE --- no code should be seen or accessible.
+
+:::
+
+- Is your model equally good or equally bad at distinguishing every Pokémon type?
+
+- Which type(s) does it predict well/poorly?
+
+::: {.callout-tip icon="false"}
+## Solution
+
+YOUR SOLUTION HERE --- no code should be seen or accessible.
+
+:::
+
+#### Task 8
+
+Assuming your final model was a tree-based model, then take the result of fitting your to the training set and pipe it into `vip::vip()`. This should create a variable importance plot. *Note: You may need to install and load the `vip` package*.
+
+If your winning model is not tree-based, train your best tree-based model on the entire training dataset (i.e., treat it like it was the best model). Then do as instructed above to create a variable importance plot.
+
+Interpret this plot. Which variables were most frequently used to predict Pokémon type? Are you surprised by these results? Why or why not?
+
+::: {.callout-tip icon="false"}
+## Solution
+
+YOUR SOLUTION HERE --- no code should be seen or accessible.
+
+:::
+
+#### Task 9
+
+Finally, for fun, let's see what the model predicts for a specific Pokémon, like Vulpix (@fig-vulpix).
+
+Extract the row corresponding to `name` for a Pokémon of your choice (or you can use Vulpix) from the dataset that was formed right before splitting it.
+
+Use `predict()` to generate a prediction, using your winning model, for the row of `new_data` you just extracted.
+
+What type did your model predict for the Pokémon you chose? Was your model right or wrong?
+
+::: {.callout-tip icon="false"}
+## Solution
+
+YOUR SOLUTION HERE --- no code should be seen or accessible.
+
+:::
